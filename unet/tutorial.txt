@@ -1,0 +1,49 @@
+<설치 및 실행 가이드>
+
+해당 소스코드는 다음과 같은 개발환경에서 테스트 하였습니다.
+
+- OS: Ubuntu 22.04 LTS
+- CPU: Ryzen Threadripper 5965X 24-Core Processor
+- GPU: Tesla V100 32GB * 8
+- Memory: 256G
+- Storage: 2TB SSD
+
+1. 도커 이미지 빌드
+docker build -t aidata-nilm .
+
+2. 도커 컨테이너 실행
+docker run -dit --gpus all --ipc=host --name aidata-nilm -v [데이터셋경로]:[컨테이너내경로] aidata-nilm:latest
+
+3. 도커 컨테이너 진입
+docker attach aidata-nilm
+
+4. 모델 체크포인트
+- 코드를 실행하기 위해서는 모델 체크포인트 파일을 [데이터셋경로]에 아래와 같은 폴더구조로 준히해야 합니다. 
+- 각 task 별 모델 파일의 경로는 다음과 같습니다.
+- [데이터셋경로]/ckp/seq2point/[기기번호]/[기기번호-epoch-000.pth]
+- [데이터셋경로]/ckp/unet/[기기번호]/[기기번호-epoch-best.pth]
+
+5. 데이터 전처리
+- 모델 추론에 앞서 다음 커맨드로 데이터 전처리를 진행합니다.
+- csv 파일을 parquet파일로 변환하는 과정이며 모델 코드 실행을 위해 필수 수행해야 합니다.
+python main.py --data_dir [데이터셋경로] \
+            --output_dir [전처리결과경로] \
+            --parallel 0 \
+            --f prep
+
+6. 모델 학습 및 추론
+- 다음 커맨드로 모델 학습 및 추론을 실행할 수 있습니다.
+- 유효전력분해 모델의 경우 --f 에 seq2points를, 활성-비활성 탐지 모델의 경우 unet을 argument로 입력하면 됩니다.
+- 학습의 경우 --fold에 train, 추론의 경우 --fold에 eval을 argument로 입력.
+python main.py --data_dir [전처리결과 데이터셋경로] \
+            --labeling_dir [라벨링데이터경로] \
+            --output_dir [결과경로] \
+            --ckp_path_root [체크포인트경로]
+            --f seq2points \
+            --fold [train/eval]
+python main.py --data_dir [전처리결과 데이터셋경로] \
+            --labeling_dir [라벨링데이터경로] \
+            --output_dir [결과경로] \
+            --ckp_path_root [체크포인트경로]
+            --f unet \
+            --fold [train/eval]

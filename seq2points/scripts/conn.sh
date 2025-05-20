@@ -1,0 +1,1 @@
+docker run -dit --ipc=host --gpus all --name aidata-nilm aidata-nilm:latest
